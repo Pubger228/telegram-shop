@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Магазин привилегий</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+            color: #333;
+        }
+        h2 {
+            text-align: center;
+            color: #007bff;
+        }
+        #points {
+            font-weight: bold;
+            color: #28a745;
+        }
+        .item {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .item h3 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .item p {
+            margin: 5px 0;
+        }
+        button {
+            padding: 8px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h2>Магазин привилегий</h2>
+    <p>Ваши очки: <span id="points">0</span></p>
+    <div id="items">
+        <div class="item">
+            <h3>Статус "VIP"</h3>
+            <p>Стоимость: 50 очков</p>
+            <p>Привилегия: Цветной ник в чате</p>
+            <button id="buy-vip" onclick="buyItem('vip', 50)">Купить</button>
+        </div>
+        <div class="item">
+            <h3>Статус "Модератор"</h3>
+            <p>Стоимость: 100 очков</p>
+            <p>Привилегия: Возможность заглушать других</p>
+            <button id="buy-moderator" onclick="buyItem('moderator', 100)">Купить</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+
+        // Получаем данные пользователя
+        const user = tg.initDataUnsafe.user;
+        const userId = user ? user.id : null;
+        let points = 0;
+
+        // Для теста задаём начальные очки (в реальном проекте это придёт от бота)
+        // Предположим, что очки передаются через query-параметр (для простоты)
+        const urlParams = new URLSearchParams(window.location.search);
+        points = parseInt(urlParams.get('points')) || 0;
+        document.getElementById('points').innerText = points;
+
+        // Функция покупки
+        function buyItem(item, cost) {
+            const button = document.getElementById(`buy-${item}`);
+            button.disabled = true; // Отключаем кнопку во время покупки
+
+            if (points >= cost) {
+                // Отправляем данные о покупке боту
+                tg.sendData(JSON.stringify({
+                    action: 'buy',
+                    item: item,
+                    cost: cost,
+                    user_id: userId
+                }));
+            } else {
+                alert('Недостаточно очков!');
+                button.disabled = false;
+            }
+        }
+
+        // Закрытие приложения после покупки (опционально)
+        tg.onEvent('webAppDataSent', () => {
+            tg.close();
+        });
+    </script>
+</body>
+</html>
